@@ -79,12 +79,12 @@ extract_pm25_comprehensive <- function(file_path, bc_boundary, year) {
     
     # SPATIAL EXTENT - MEAN values
     # 51-hour mean
-    cells_mean_51hr_over_15 <- sum(vals_mean_51hr_clean > 15, na.rm = TRUE)  # FIXED
-    cells_mean_51hr_over_37.5 <- sum(vals_mean_51hr_clean > 37.5, na.rm = TRUE)  # FIXED
+    cells_mean_51hr_over_15 <- sum(vals_mean_51hr_clean > 15, na.rm = TRUE)  
+    cells_mean_51hr_over_37.5 <- sum(vals_mean_51hr_clean > 37.5, na.rm = TRUE)  
     
     # 24-hour mean
-    cells_mean_24hr_over_15 <- sum(vals_mean_24hr_clean > 15, na.rm = TRUE)  # FIXED
-    cells_mean_24hr_over_37.5 <- sum(vals_mean_24hr_clean > 37.5, na.rm = TRUE)  # FIXED
+    cells_mean_24hr_over_15 <- sum(vals_mean_24hr_clean > 15, na.rm = TRUE)  
+    cells_mean_24hr_over_37.5 <- sum(vals_mean_24hr_clean > 37.5, na.rm = TRUE)  
     
     # DURATION-BASED SPATIAL METRICS
     cells_6hrs_over_15 <- sum(values(hours_over_15) >= 6, na.rm = TRUE)
@@ -100,7 +100,7 @@ extract_pm25_comprehensive <- function(file_path, bc_boundary, year) {
     mean_hours_over_37.5 <- mean(values(hours_over_37.5)[values(hours_over_37.5) > 0], na.rm = TRUE)
     
     # DETERMINE RESOLUTION AND CALCULATE CELL AREA
-    date_str <- gsub(".*_(\\d{8})_.*", "\\1", basename(file_path))  # FIXED regex
+    date_str <- gsub(".*_(\\d{8})_.*", "\\1", basename(file_path))  
     file_date <- as.Date(date_str, format = "%Y%m%d")
     file_month <- month(file_date)
     
@@ -474,7 +474,7 @@ if(sum(results_df$success) > 0) {
     successful <- results_df %>% filter(success == TRUE)
     
     worst_days <- successful %>%
-      arrange(desc(peak_max_24hr)) %>%  # FIXED: was peak_max
+      arrange(desc(peak_max_24hr)) %>% 
       select(date, peak_max_24hr, mean_mean_24hr, consecutive_hrs_over_37.5, 
              area_over_37.5_km2, pct_bc_over_37.5) %>%
       head(10)
