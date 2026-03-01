@@ -146,21 +146,15 @@ census_wide_spatial <- census_wide_spatial %>%
     difference = pop_total_65plus - check_total
   )
 
-print("=== VERIFICATION ===")
-print("Total should equal male + female (difference should be ~0):")
+
 summary(census_wide_spatial$difference)
 
-print("\nAge group summary:")
 summary(census_wide_spatial[c("pop_total_2021", "pop_total_65plus", 
                               "pop_male_65plus", "pop_female_65plus")])
 
 # Save
 st_write(census_wide_spatial, "bc_das_population_for_raster.gpkg", delete_layer = TRUE)
 
-print("\n✓ Saved to bc_das_population_for_raster.gpkg")
+write.csv(census_wide_spatial, "rasterized_census.csv", row.names = FALSE)
 
-write.csv(census_wide, "rasterized_census.csv", row.names = FALSE)
-
-
-st_write(census_wide, "bc_das_population_for_raster.gpkg", delete_layer = TRUE)
-saveRDS(census_wide, "bc_das_population_for_raster.rds")
+saveRDS(census_wide_spatial, "bc_das_population_for_raster.rds")
