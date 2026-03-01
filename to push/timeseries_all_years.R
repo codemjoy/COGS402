@@ -1,10 +1,10 @@
 library(tidyverse)
 library(lubridate)
 library(ggplot2)
+library(ggh4x)  
 
 years <- 2021:2025
 
-# Load all years and calculate the BC-wide daily max PM2.5
 ts_data <- map_dfr(years, function(yr) {
   readRDS(paste0("da_daily_pm25_exposure_", yr, ".rds")) %>%
     group_by(date) %>%
@@ -16,7 +16,8 @@ ts_data <- map_dfr(years, function(yr) {
     mutate(
       year      = yr,
       plot_date = as.Date(paste0("2000-", format(date, "%m-%d")))
-    )
+    ) %>%
+    filter(month(date) >= 5 & month(date) <= 10)   # fire season only
 }) %>%
   mutate(
     above_threshold = bc_daily_max >= 15,
@@ -46,26 +47,26 @@ p <- ggplot(ts_data, aes(x = plot_date, y = bc_daily_max)) +
     date_labels = "%b"
   ) +
   
-  facet_wrap(~ year_label, ncol = 1, strip.position = "top") +
+  facet_wrap2(~ year_label, ncol = 2, strip.position = "top", axes = "all", remove_labels = "none") +  # x-axis on all panels
   
   labs(
-    title    = "Daily Peak PM\u2082.\u2085 Across BC, 2021\u20132025",
-    subtitle = "Maximum observed PM\u2082.\u2085 across all BC dissemination areas on each day \u00b7 BlueSky band 1 (9am UTC observed snapshot)",
-    x        = "Date",
+    title    = "Daily Peak PM\u2082.\u2085 Across BC During Fire Season, 2021\u20132025",
+    subtitle = "Maximum observed PM\u2082.\u2085 across all BC dissemination areas on each day \u00b7 BlueSky band 1\n (9am UTC observed snapshot) Fire season: May\u2013October",
+    x        = "Month",
     y        = "Peak PM\u2082.\u2085 (\u00b5g/m\u00b3, log scale)",
     caption  = "BlueSky fire weather model. Statistics Canada 2021 Census dissemination areas."
   ) +
   
   theme_minimal(base_size = 11) +
   theme(
-    plot.title         = element_text(face = "bold", size = 16, hjust = 0.5),
-    plot.subtitle      = element_text(color = "grey40", size = 9, hjust = 0.5,
+    plot.title         = element_text(face = "bold", size = 20, hjust = 0.5),
+    plot.subtitle      = element_text(color = "grey40", size = 14, hjust = 0.5,
                                       margin = margin(b = 8)),
-    plot.caption       = element_text(color = "grey50", size = 8, hjust = 0.5,
+    plot.caption       = element_text(color = "grey50", size = 13, hjust = 0.5,
                                       lineheight = 1.4, margin = margin(t = 10)),
-    strip.text         = element_text(face = "bold", size = 11),
+    strip.text         = element_text(face = "bold", size = 15),
     legend.position    = "bottom",
-    legend.text        = element_text(size = 9),
+    legend.text        = element_text(size = 15),
     panel.grid.minor   = element_blank(),
     panel.grid.major.x = element_blank(),
     axis.text          = element_text(color = "grey30", size = 8),
@@ -77,10 +78,10 @@ p <- ggplot(ts_data, aes(x = plot_date, y = bc_daily_max)) +
 
 print(p)
 ggsave(
-  "timeseries_daily_pm25_2021_2026.png",
+  "timeseries_fire_season_2021_2025.png",
   plot   = p,
   width  = 11,
-  height = 14,
+  height = 9,
   dpi    = 300,
   bg     = "white"
 )
