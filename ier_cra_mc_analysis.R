@@ -43,15 +43,15 @@ da_by_year <- map(
   }
 )
 
-# --- Chen et al. (2017) ---
-CHEN_HR_CENTRAL   <- 1.04    # HR per 4.8 µg/m³ IQR
-CHEN_HR_LO        <- 1.02    # 95% CI lower
-CHEN_HR_HI        <- 1.06    # 95% CI upper
-CHEN_IQR          <- 4.8     # µg/m³
+# Chen paramters
+CHEN_HR_CENTRAL   <- 1.04   
+CHEN_HR_LO        <- 1.02    
+CHEN_HR_HI        <- 1.06
+CHEN_IQR          <- 4.8   
 CHEN_BETA_CENTRAL <- log(CHEN_HR_CENTRAL) / CHEN_IQR
 CHEN_BETA_SE      <- (log(CHEN_HR_HI) - log(CHEN_HR_LO)) / (2 * 1.96) / CHEN_IQR
 
-# Incidence rates (Fasoro/ CCDSS)
+# Incidence rates 
 INCIDENCE_65_74  <- 2.80 / 1000    # 65–74
 INCIDENCE_75_84  <- 34.5 / 1000    # 75–84
 INCIDENCE_85PLUS <- 44.6 / 1000    # 85+
@@ -75,13 +75,13 @@ cf_regional <- read_csv("cf_annual_regional.csv") %>%
 # Ru et al. (2021) GEMM parameters 
 GEMM_THETA_CENTRAL <- 0.12
 GEMM_THETA_SE      <- 0.03
-GEMM_MU            <- -1.3      # fixed (mode from ensemble)
-GEMM_TAU           <- 0.1       # fixed (mode from ensemble)
-GEMM_R             <- 143.3     # exposure range: max 95th pct (146) - min 5th pct (2.7)
-GEMM_XCF_LO        <- 2.7       # Uniform TMREL lower bound (Ru et al. 2021, Section 2.3)
-GEMM_XCF_HI        <- 7.6       # Uniform TMREL upper bound
+GEMM_MU            <- -1.3      
+GEMM_TAU           <- 0.1      
+GEMM_R             <- 143.3     
+GEMM_XCF_LO        <- 2.7     
+GEMM_XCF_HI        <- 7.6       
 
-# GEMM relative risk function (Ru et al. 2021 / Burnett et al. 2018)
+# GEMM 
 gemm_rr <- function(z, theta, mu, tau, r, xcf) {
   x     <- pmax(z - xcf, 0)
   f_x   <- log(x + 1)
@@ -146,6 +146,36 @@ print(point_estimates)
 cat(sprintf("Cumulative Chen: %.0f  |  Cumulative GEMM: %.0f\n",
             sum(point_estimates$point_chen_cf_regional),
             sum(point_estimates$point_gemm_regional)))
+
+
+# DA-days between 146 and 250 µg/m³ ?
+da_all_years <- map_dfr(years, \(yr) {
+  da_by_year[[as.character(yr)]] %>%
+    mutate(year = yr)
+})
+
+da_all_years %>%
+  summarise(
+    total_da_days  = n(),
+    n_146_to_250   = sum(pm25_mean > 146 & pm25_mean <= 250, na.rm = TRUE),
+    pct_146_to_250 = round(mean(pm25_mean > 146 & pm25_mean <= 250, na.rm = TRUE) * 100, 2),
+    n_above_146    = sum(pm25_mean > 146, na.rm = TRUE),
+    pct_above_146  = round(mean(pm25_mean > 146, na.rm = TRUE) * 100, 2)
+  ) %>%
+  print()
+
+# Broken down by year
+da_all_years %>%
+  group_by(year) %>%
+  summarise(
+    total_das      = n(),
+    n_146_to_250   = sum(pm25_mean > 146 & pm25_mean <= 250, na.rm = TRUE),
+    pct_146_to_250 = round(mean(pm25_mean > 146 & pm25_mean <= 250, na.rm = TRUE) * 100, 2),
+    n_above_146    = sum(pm25_mean > 146, na.rm = TRUE),
+    pct_above_146  = round(mean(pm25_mean > 146, na.rm = TRUE) * 100, 2),
+    .groups = "drop"
+  ) %>%
+  print()
 
 # MONTE CARLO
 N_SIM <- 10000
@@ -311,7 +341,7 @@ p_model_comparison <- mc_annual_summary %>%
       "Daily cap: 250 µg/m³. Monte Carlo n = 10,000."
     )
   ) +
-  theme_minimal(base_size = 12) +
+  theme_minimal(base_size = 14) +
   theme(
     plot.title       = element_text(face = "bold", size = 14),
     plot.subtitle    = element_text(colour = "grey40", size = 10),
@@ -359,7 +389,7 @@ p_annual <- ggplot(
       y     = factor(Year, levels = rev(c(2021,2022,2023,2024,2025))),
       colour = Scenario)
 ) +
-  geom_vline(xintercept = seq(0, 3000, by = 1000),
+  geom_vline(xintercept = seq(0, 2000, by = 500),
              colour = "grey90", linewidth = 0.4) +
   geom_errorbar(
     aes(xmin = CI_lo, xmax = CI_hi),
@@ -387,18 +417,18 @@ p_annual <- ggplot(
   scale_colour_manual(values = scenario_colours, guide = "none") +
   scale_x_continuous(
     limits = c(0, 2000),
-    breaks = seq(0, 1500, by = 500),
+    breaks = seq(0, 2000, by = 500),
     expand = expansion(mult = c(0, 0.02)),
     labels = comma
   ) +
   labs(title = "**Annual**", x = "Attributable cases", y = NULL) +
-  theme_minimal(base_size = 12) +
+  theme_minimal(base_size = 14) +
   theme(
-    plot.title         = element_markdown(size = 12, hjust = 0.5),
+    plot.title         = element_markdown(size = 20, hjust = 0.5),
     panel.grid         = element_blank(),
     panel.grid.major.x = element_line(colour = "grey90", linewidth = 0.4),
-    axis.text.y        = element_text(size = 11, colour = "grey20"),
-    axis.text.x        = element_text(size = 10, colour = "grey40"),
+    axis.text.y        = element_text(size = 13, colour = "grey20"),
+    axis.text.x        = element_text(size = 13, colour = "grey40"),
     plot.margin        = margin(8, 32, 8, 8)
   )
 
@@ -409,7 +439,7 @@ p_cumul <- ggplot(
       y      = plot_year,
       colour = Scenario)
 ) +
-  geom_vline(xintercept = seq(0, 1500, by = 500),
+  geom_vline(xintercept = seq(0, 3500, by = 500),
              colour = "grey90", linewidth = 0.4) +
   geom_errorbar(
     aes(xmin = CI_lo, xmax = CI_hi),
@@ -434,18 +464,18 @@ p_cumul <- ggplot(
   scale_colour_manual(values = scenario_colours, guide = "none") +
   scale_x_continuous(
     limits = c(0, 4500),
-    breaks = seq(0, 3000, by = 1000),
+    breaks = seq(0, 3500, by = 500),
     expand = expansion(mult = c(0, 0.02)),
     labels = comma
   ) +
   labs(title = "**Cumulative 2021–2025**", x = "Attributable cases", y = NULL) +
-  theme_minimal(base_size = 12) +
+  theme_minimal(base_size = 14) +
   theme(
-    plot.title         = element_markdown(size = 12, hjust = 0.5),
+    plot.title         = element_markdown(size = 20, hjust = 0.5),
     panel.grid         = element_blank(),
     panel.grid.major.x = element_line(colour = "grey90", linewidth = 0.4),
-    axis.text.y        = element_text(size = 11, colour = "grey20"),
-    axis.text.x        = element_text(size = 10, colour = "grey40"),
+    axis.text.y        = element_text(size = 14, colour = "grey20"),
+    axis.text.x        = element_text(size = 14, colour = "grey40"),
     plot.margin        = margin(8, 8, 8, 32)
   )
 
@@ -478,9 +508,9 @@ p_combined <- wrap_plots(p_annual, p_cumul, ncol = 2, widths = c(1.6, 1)) +
       "Monte Carlo n = 10,000. Daily cap: 250 µg/m³."
     ),
     theme = theme(
-      plot.title    = element_text(face = "bold", size = 14),
-      plot.subtitle = element_text(colour = "grey40", size = 10),
-      plot.caption  = element_text(colour = "grey50", size = 8.5,
+      plot.title    = element_text(face = "bold", size = 20),
+      plot.subtitle = element_text(colour = "grey40", size = 15),
+      plot.caption  = element_text(colour = "grey50", size = 11,
                                    lineheight = 1.4, hjust = 0)
     )
   )
@@ -497,7 +527,6 @@ ggsave("fig_forest_annual_cumul.png",
        final_plot, width = 16, height = 6, dpi = 300, bg = "white")
 
 # FIGURE: GEMM Burden Map (2021 vs 2023) + Top 5 Bar Charts
-
 # --- Per-DA GEMM point estimates ---
 da_burden_map <- map_dfr(c(2021, 2023), \(yr) {
   d <- da_by_year[[as.character(yr)]] %>%

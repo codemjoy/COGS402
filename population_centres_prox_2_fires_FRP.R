@@ -148,7 +148,6 @@ hotspot_daily <- map_dfr(YEARS, function(yr) {
 
 write_csv(hotspot_daily, "city_hotspot_proximity_temporal.csv")
 
-# Summary table: formatted for reporting
 hotspot_summary <- hotspot_daily %>%
   mutate(
     exposure_window_100km = case_when(
@@ -169,21 +168,18 @@ print(hotspot_summary, n = Inf)
 write.csv(hotspot_summary, "city_fire_exposure_summary.csv")
 
 # age comp of populations near fires
-
 da_sf_bc <- st_read("bc_das.shp", quiet = TRUE) %>%
   st_transform(CRS_BC) %>%
   filter(PRUID == "59")
 
 da_census <- st_read("bc_das_population_for_raster.gpkg", quiet = TRUE)
 
-# Handle whether da_census has geometry or not
 da_census_df <- if (inherits(da_census, "sf")) {
   as.data.frame(da_census)
 } else {
   da_census
 }
 
-# Join geometry to census attributes
 da_joined <- da_sf_bc %>%
   left_join(
     da_census_df %>%
@@ -230,8 +226,6 @@ write_csv(age_near_fire, "age_composition_near_fires.csv")
 
 
 # Fig1: Provincial NBAC perimeters + VIIRS FRP
-
-# Classify FRP for legend
 viirs_plot <- viirs_raw %>%
   mutate(
     frp_class = cut(FRP,

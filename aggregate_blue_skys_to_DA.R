@@ -11,17 +11,6 @@ library(tidyr)
 year        <- 2025
 bluesky_dir <- "/Users/minalander/Library/Mobile Documents/com~apple~CloudDocs/Documents/University /Year 5/COGS 402/Data/Blue skys tif /2025"
 
-# BlueSky Canada BSC00CA12-01: 51-band hourly output, initialized 00:00 UTC
-# UTC-7 = PDT (summer); band 1 = 00:00 UTC = 17:00 PDT prior day
-# Band 8  = 07:00 UTC = 00:00 PDT (start of filename calendar day)
-# Band 31 = 30:00 UTC = 23:00 PDT (end of filename calendar day)
-# Bands 32-51 = 00:00-19:00 PDT following day (forecast overhang, excluded)
-#
-# PRIMARY:     bands 8-31  = full 24-hr PDT mean (aligns with Chen et al. CRF)
-# SENSITIVITY: bands 20-26 = 12:00-18:00 PDT afternoon mean
-#              (avoids nocturnal BlueSky accumulation artifact;
-#               produces higher estimates — reported as sensitivity)
-
 BAND_PRIMARY     <- 8:31  
 BAND_AFTERNOON   <- 20:26  
 
@@ -89,17 +78,9 @@ da_daily_exposure <- bind_rows(daily_results) %>%
     above_50   = pm25_mean > 50
   )
 
-
-# SAVE OUTPUTS
-
 saveRDS(da_daily_exposure, paste0("da_daily_pm25_exposure_", year, ".rds"))
 write.csv(da_daily_exposure, paste0("da_daily_pm25_exposure_", year, ".csv"),
           row.names = FALSE)
-
-# ============================================================
-# ANNUAL SUMMARY GPKG
-# Required downstream for population data and spatial geometry
-# ============================================================
 
 da_annual_summary <- da_daily_exposure %>%
   group_by(DGUID) %>%

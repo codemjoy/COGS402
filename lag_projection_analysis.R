@@ -10,7 +10,7 @@ FIRE_MONTHS    <- 5:10
 ARTIFACT_CAP   <- 250
 N_SIM          <- 10000
 
-# GEMM PARAMETERS (Ru et al. 2021 
+# GEMM PARAMETERS 
 GEMM_THETA_CENTRAL <- 0.12
 GEMM_THETA_SE      <- 0.03
 GEMM_MU            <- -1.3      
@@ -19,7 +19,7 @@ GEMM_R             <- 143.3
 GEMM_XCF_LO        <- 2.7       
 GEMM_XCF_HI        <- 7.6       
 
-# GEMM relative risk function (Ru et al. 2021 / Burnett et al. 2018)
+
 gemm_rr <- function(z, theta, mu, tau, r, xcf) {
   x     <- pmax(z - xcf, 0)
   f_x   <- log(x + 1)
@@ -160,10 +160,8 @@ message(sprintf("Survival lag-15 (55\u219270): %.4f  [sensitivity 2022-2024: %.4
 message(sprintf("Survival lag-20 (55→75): %.4f  [sensitivity 2022-2024: %.4f]",
                 surv_lag20, surv_lag20_sens))
 
-# ============================================================
-# INCIDENCE RATES (Fasoro / CCDSS)
-# ============================================================
 
+# INCIDENCE RATES
 INCIDENCE_65_74  <- 2.80 / 1000
 INCIDENCE_75_84  <- 34.5 / 1000
 INCIDENCE_85PLUS <- 44.6 / 1000
@@ -217,18 +215,14 @@ summarise_mc <- function(mc_results, cf_label) {
   list(per_year = per_year, cumulative = cumulative)
 }
 
-# ============================================================
-# MONTE CARLO — IER 
-# ============================================================
-
+#monte carlo
 run_lag_simulation_gemm <- function(cf_mode = c("empirical", "fixed"),
                                     fixed_cf = 5) {
   cf_mode <- match.arg(cf_mode)
   
   results <- lapply(seq_len(N_SIM), function(i) {
     
-    # Sample GEMM parameters — only theta and xcf are uncertain;
-    # mu and tau are fixed modal values (Ru et al. 2021)
+
     theta_i <- max(rnorm(1, GEMM_THETA_CENTRAL, GEMM_THETA_SE), 0.01)
     xcf_i   <- runif(1, GEMM_XCF_LO, GEMM_XCF_HI)
     
@@ -604,7 +598,7 @@ p_right <- ggplot(
     panel.grid.major.y = element_blank(),
     panel.grid.minor   = element_blank(),
     legend.position    = "none",
-    plot.title         = element_text(size = 10, face = "bold", colour = "grey30")
+    plot.title         = element_text(size = 12, face = "bold", colour = "grey30")
   )
 
 # --- Combine with patchwork ---
@@ -623,9 +617,9 @@ p_forest_lag <- p_forest_lag +
       "Survival correction from BC life tables (Statistics Canada 13-10-0114-01). Monte Carlo n = 10,000."
     ),
     theme = theme(
-      plot.title    = element_markdown(face = "bold", size = 12),
-      plot.subtitle = element_text(colour = "grey40", size = 9),
-      plot.caption  = element_text(colour = "grey45", size = 7.5,
+      plot.title    = element_markdown(face = "bold", size = 20),
+      plot.subtitle = element_text(colour = "grey40", size = 15),
+      plot.caption  = element_text(colour = "grey45", size = 11,
                                    lineheight = 1.4)
     )
   )

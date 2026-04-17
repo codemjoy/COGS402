@@ -174,22 +174,15 @@ make_dot_panel <- function(da_sf, yr, one_dot_per = 200,
       direction = -1,
       limits    = c(0, scale_max),
       oob       = scales::squish,
-      name      = "PM~2.5~\n(µg/m³)",
+      name      = "PM\u2082.\u2085\n(\u03bcg/m\u00b3)",
       labels    = label_number(accuracy = 0.1)
-    ) +
-    labs(
-      title   = as.character(yr),
-      caption = if (yr == 2025)
-        paste0("1 dot = ", one_dot_per, " people | ",
-               "dot colour = DA mean fire-season PM~2.5~ | capped at 250 µg/m³")
-      else NULL
     ) +
     theme_void(base_size = 10) +
     theme(
       plot.background   = element_rect(fill = "white", color = NA),
-      plot.title        = element_text(face = "bold", size = 20, hjust = 0.5,
+      plot.title        = element_markdown(face = "bold", size = 20, hjust = 0.5,
                                        margin = margin(b = 4, t = 6)),
-      plot.caption      = element_text(colour = "grey50", size = 13, hjust = 0.5,
+      plot.caption      = element_markdown(colour = "grey50", size = 13, hjust = 0.5,
                                        margin = margin(t = 4)),
       legend.position   = if (show_legend) "right" else "none",
       legend.title      = element_text(size = 12),
@@ -227,9 +220,9 @@ p_dot_combined <- dot_top / dot_bottom +
     caption  = paste0("Data: BlueSky Canada smoke forecast system | ",
                       "StatCan DA boundaries | Projection: BC Albers (EPSG:3005)"),
     theme = theme(
-      plot.title    = element_text(face = "bold", size = 21,
+      plot.title    = element_markdown(face = "bold", size = 21,
                                    margin = margin(b = 4, t = 8)),
-      plot.subtitle = element_text(colour = "grey50", size = 16,
+      plot.subtitle = element_markdown(colour = "grey50", size = 16,
                                    margin = margin(b = 8)),
       plot.caption  = element_text(colour = "grey50", size = 14, hjust = 1)
     )
