@@ -1,23 +1,6 @@
-# ============================================================
-# MONTE CARLO UNCERTAINTY ANALYSIS
-# Wildfire PM2.5 – Attributable Alzheimer's Cases
-# Mina Zhao – COGS 402 / MURC 2026
-#
-# Replaces the three-point (low/central/high) sensitivity with
-# a proper probabilistic uncertainty propagation across the
-# Chen et al. (2017) CRF beta distribution.
-#
-# KEY ASSUMPTION:
-#   Chen et al. (2017) report HR = 1.04 (95% CI: 1.03–1.05)
-#   per 4.8 µg/m³ IQR increase in long-term PM2.5.
-#   We treat ln(HR) as normally distributed with:
-#     mean  = log(1.04) / 4.8
-#     se    = (log(1.05) - log(1.03)) / (2 * 1.96 * 4.8)
-#   This is standard practice in HIA literature (cf. Matz et al.).
-# ============================================================
-
 library(tidyverse)
 library(sf)
+library(ggtext)
 
 # ---- 1. PARAMETERS ------------------------------------------
 
@@ -30,8 +13,6 @@ iqr        <- 4.8          # IQR used in Chen et al.
 # Convert to beta (ln(HR) per µg/m³)
 beta_mean <- log(hr_central) / iqr
 
-# Standard error of beta from the 95% CI
-# CI is symmetric on log scale: SE = (log(HR_upper) - log(HR_lower)) / (2 * 1.96)
 beta_se   <- (log(hr_high) - log(hr_low)) / (2 * 1.96 * iqr)
 
 cat("Beta mean:", round(beta_mean, 6), "\n")
@@ -54,8 +35,8 @@ primary_rates <- list(
 
 years <- 2021:2026
 
-# ---- 2. SAMPLE BETA DISTRIBUTION ----------------------------
-# Draw n_sims betas from the normal distribution
+# ---- SAMPLE BETA DISTRIBUTION ----------------------------
+
 beta_samples <- rnorm(n_sims, mean = beta_mean, sd = beta_se)
 
 cat("Sampled beta distribution:\n")
@@ -63,10 +44,7 @@ cat("  Mean:", round(mean(beta_samples), 6), "\n")
 cat("  2.5%:", round(quantile(beta_samples, 0.025), 6), "\n")
 cat(" 97.5%:", round(quantile(beta_samples, 0.975), 6), "\n\n")
 
-# ---- 3. PRELOAD EXPOSURE DATA -------------------------------
-# Load all years once to avoid repeated disk reads inside the MC loop.
-# Each element is a tibble with DGUID, delta_pm25, and population columns.
-
+# ---- PRELOAD EXPOSURE DATA -------------------------------.
 year_data <- map(years, function(yr) {
   
   daily <- readRDS(paste0("da_daily_pm25_exposure_", yr, ".rds"))
@@ -105,7 +83,7 @@ year_data <- map(years, function(yr) {
 
 names(year_data) <- years
 
-# ---- 4. MONTE CARLO LOOP ------------------------------------
+# ---- MONTE CARLO LOOP ------------------------------------
 
 # Pre-extract the vectors 
 prepped <- map(year_data, function(df) {
@@ -138,14 +116,14 @@ close(pb)
 
 cat("\n\nMonte Carlo complete.\n\n")
 
-# ---- 5. SUMMARISE RESULTS -----------------------------------
+# ---- SUMMARISE RESULTS -----------------------------------
 
 # Per-year summary
 mc_year_summary <- map_dfr(seq_along(years), function(j) {
   sims <- mc_results[, j]
   tibble(
     year           = years[j],
-    central        = median(sims),          # use median of distribution
+    central        = median(sims),          
     mean_sim       = mean(sims),
     ci_lower       = quantile(sims, 0.025),
     ci_upper       = quantile(sims, 0.975),
@@ -278,10 +256,7 @@ ggsave(
   bg = "#ffffffC9"
 )
 
-# ---- 9. UPDATED BAR PLOT WITH MC CIs -----------------------
-# Drop-in replacement for your existing p1_extended,
-# now with proper MC 95% CIs instead of three-point range.
-
+# ---- UPDATED BAR PLOT WITH MC CIs -----------------------
 plot_data_mc <- mc_year_summary %>%
   mutate(
     is_small            = central < 50,
@@ -335,7 +310,7 @@ p_mc_bars <- ggplot(plot_data_mc, aes(x = factor(year))) +
   ) +
   
   labs(
-    title    = "Estimated Alzheimer's Cases Attributable to Wildfire PM\u2082.\u2085",
+    title    = "Estimated Alzheimer's Cases Attributable to Wildfire PM<sub>2.5</sub>",
     subtitle = "British Columbia, 2021\u20132026 Fire Seasons (May\u2013September) \u00b7 Population Aged 65+",
     x        = "Year",
     y        = "Attributable Alzheimer's cases",
@@ -343,14 +318,14 @@ p_mc_bars <- ggplot(plot_data_mc, aes(x = factor(year))) +
       "Bars: median of Monte Carlo distribution (10,000 simulations).\n",
       "Shaded range: 95% CI from probabilistic sampling of \u03b2 ~ N(log(1.04)/4.8, SE),\n",
       "where SE derived from Chen et al. (2017) HR 95% CI (1.03\u20131.05 per 4.8 \u00b5g/m\u00b3 IQR).\n",
-      "Counterfactual: 15 \u00b5g/m\u00b3 (WHO AQG). BlueSky fire weather model. Statistics Canada 2021 Census."
+      "Counterfactual: 15 \u00b5g/m\u00b3 (WHO AQG). BlueSky Canada smoke forecast system. Statistics Canada 2021 Census."
     )
   ) +
   
   theme_minimal(base_size = 12) +
   theme(
-    plot.title         = element_text(face = "bold", size = 20, hjust = 0),
-    plot.subtitle      = element_text(color = "grey40", size = 16, hjust = 0),
+    plot.title         = element_markdown(face = "bold", size = 20, hjust = 0),
+    plot.subtitle      = element_markdown(color = "grey40", size = 16, hjust = 0),
     plot.caption       = element_text(color = "grey50", size = 13, hjust = 0,
                                       lineheight = 1.4),
     panel.grid.major.x = element_blank(),
